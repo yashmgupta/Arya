@@ -94,29 +94,33 @@ function initializeGallery() {
     
     const scrollAmount = 370; // Item width + gap
     let autoScrollInterval;
+    let userHasInteracted = false; // New flag to track user interaction
     
-    // Button controls
+    // Button controls - permanently stop auto-scroll on click
     nextBtn.addEventListener('click', () => {
+        userHasInteracted = true; // Set flag
         stopAutoScroll();
         galleryScroll.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-        startAutoScrollDelayed();
+        // Removed startAutoScrollDelayed() call
     });
     
     prevBtn.addEventListener('click', () => {
+        userHasInteracted = true; // Set flag
         stopAutoScroll();
         galleryScroll.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-        startAutoScrollDelayed();
+        // Removed startAutoScrollDelayed() call
     });
     
-    // Auto-scroll functionality
+    // Auto-scroll functionality with 15-second interval
     function startAutoScroll() {
+        if (userHasInteracted) return; // Don't start if user has interacted
         autoScrollInterval = setInterval(() => {
             if (galleryScroll.scrollLeft >= galleryScroll.scrollWidth - galleryScroll.clientWidth) {
                 galleryScroll.scrollTo({ left: 0, behavior: 'smooth' });
             } else {
                 galleryScroll.scrollBy({ left: scrollAmount, behavior: 'smooth' });
             }
-        }, 4000);
+        }, 15000); // Changed from 4000 to 15000 (15 seconds)
     }
     
     function stopAutoScroll() {
@@ -127,19 +131,26 @@ function initializeGallery() {
     }
     
     function startAutoScrollDelayed() {
-        setTimeout(startAutoScroll, 2000);
+        if (!userHasInteracted) { // Only start if user hasn't manually interacted
+            setTimeout(startAutoScroll, 2000);
+        }
     }
     
-    // Pause auto-scroll on hover
+    // Keep hover behavior as temporary pause
     galleryScroll.addEventListener('mouseenter', stopAutoScroll);
-    galleryScroll.addEventListener('mouseleave', startAutoScrollDelayed);
+    galleryScroll.addEventListener('mouseleave', () => {
+        if (!userHasInteracted) { // Only resume if user hasn't manually interacted
+            startAutoScrollDelayed();
+        }
+    });
     
-    // Touch/swipe support for mobile
+    // Touch/swipe support for mobile - permanently stop auto-scroll on touch
     let startX = 0;
     let scrollLeft = 0;
     let isDown = false;
     
     galleryScroll.addEventListener('touchstart', (e) => {
+        userHasInteracted = true; // Set flag
         startX = e.touches[0].pageX;
         scrollLeft = galleryScroll.scrollLeft;
         stopAutoScroll();
@@ -154,7 +165,7 @@ function initializeGallery() {
     
     galleryScroll.addEventListener('touchend', () => {
         startX = 0;
-        startAutoScrollDelayed();
+        // Removed startAutoScrollDelayed() call since user has interacted
     });
     
     // Start auto-scroll when gallery comes into view
